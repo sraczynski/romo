@@ -8,7 +8,7 @@ import { UserIsAuthenticated } from './util/wrappers.js'
 // Layouts
 import App from './App'
 import Home from './layouts/home/Home'
-import Dashboard from './layouts/dashboard/Dashboard'
+import Project from './layouts/project/Project'
 import Profile from './user/layouts/profile/Profile'
 
 // Redux Store

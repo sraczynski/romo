@@ -10,6 +10,7 @@ import LogoutButtonContainer from './user/ui/logoutbutton/LogoutButtonContainer'
 import './css/oswald.css'
 import './css/open-sans.css'
 import './css/pure-min.css'
+import './css/palette.css'
 import './App.css'
 
 class App extends Component {
@@ -17,7 +18,10 @@ class App extends Component {
     const OnlyAuthLinks = VisibleOnlyAuth(() =>
       <span>
         <li className="pure-menu-item">
-          <Link to="/dashboard" className="pure-menu-link">Dashboard</Link>
+          <Link to="/project" className="pure-menu-link">Project</Link>
+        </li>
+        <li className="pure-menu-item">
+          <Link to="/websam" className="pure-menu-link">Websam</Link>
         </li>
         <li className="pure-menu-item">
           <Link to="/profile" className="pure-menu-link">Profile</Link>
