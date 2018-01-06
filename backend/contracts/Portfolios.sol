@@ -2,7 +2,7 @@ pragma solidity ^0.4.2;
 
 contract Portfolios {
 
-    address teacher;
+    address public teacher;
 
     // ------------------------------------------------------------------------
     // Project management
@@ -21,15 +21,15 @@ contract Portfolios {
     }
 
     // A dynamic list (implemented as a mapping) of projects
-    mapping(uint => Project) projects;
-    uint public n_projects;
+    mapping(uint => Project) public projects;
+    uint public n_projects = 0;
 
     //TODO: this is redundant with Project::members
-    struct membership {
+    struct Membership {
         uint i_project;
         bool assigned;
     }
-    mapping(address => membership) memberships;
+    mapping(address => Membership) public memberships;
 
     // ------------------------------------------------------------------------
     // Voting
@@ -41,7 +41,7 @@ contract Portfolios {
     }
 
     mapping(address => voter) voters;
-    uint activeVoters;
+    uint activeVoters = 1;
 
     struct votecast {
         uint i_project;
@@ -61,16 +61,16 @@ contract Portfolios {
     // ------------------------------------------------------------------------
 
     function Portfolios()
-      public {
+      public
+    {
         teacher = msg.sender;
         voters[teacher].active = true;
-        voters[teacher].n_votes = 35 ether;  // the teacher is rich :)
-        activeVoters = 1;
-        n_projects = 0;
+        voters[teacher].n_votes = 35 ether;
     }
 
     function kill()
-      public {
+      public view
+    {
         if (msg.sender != teacher)
             return;
 
@@ -147,13 +147,13 @@ contract Portfolios {
 
             // 2. Capital earned in own project
             Project storage myProject = projects[uint(hp)];
-            _capital += myProject.n_votes / (myProject.members.length);
+            _capital += 1 ether * myProject.n_votes / (myProject.members.length);
 
             // 3. Capital invested in other projects
             votecast[] storage portfolio = investments[msg.sender];
             for (uint i_vote = 0; i_vote < portfolio.length; i_vote++) {
                 Project storage p = projects[portfolio[i_vote].i_project];
-                _capital += portfolio[i_vote].n_votes * p.n_votes / (1 ether * p.members.length);
+                _capital += 1 ether * portfolio[i_vote].n_votes * p.n_votes / (p.members.length);
             }
         }
     }
@@ -185,11 +185,12 @@ contract Portfolios {
     function newProject(bytes32 whitepaper, string title)
       public
     {
-        projects[n_projects].whitepaper = whitepaper;
-        projects[n_projects].title = title;
-        projects[n_projects].creator = msg.sender;
-        joinProject(n_projects);
+        Project storage p = projects[n_projects];
+        p.whitepaper = whitepaper;
+        p.title = title;
+        p.creator = msg.sender;
         n_projects++;
+        joinProject(n_projects - 1);
     }
 
     // Joins a project
@@ -222,7 +223,7 @@ contract Portfolios {
       public view
       returns (int)
     {
-        if (memberships[msg.sender].assigned) {  // already a member
+        if (!memberships[msg.sender].assigned) {  // already a member
             return -1;
         } else {
             return int(memberships[msg.sender].i_project);
