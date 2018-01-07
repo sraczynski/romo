@@ -147,13 +147,13 @@ contract Portfolios {
 
             // 2. Capital earned in own project
             Project storage myProject = projects[uint(hp)];
-            _capital += 1 ether * myProject.n_votes / (myProject.members.length);
+            _capital += myProject.n_votes / (2 * myProject.members.length);
 
             // 3. Capital invested in other projects
             votecast[] storage portfolio = investments[msg.sender];
             for (uint i_vote = 0; i_vote < portfolio.length; i_vote++) {
                 Project storage p = projects[portfolio[i_vote].i_project];
-                _capital += 1 ether * portfolio[i_vote].n_votes * p.n_votes / (p.members.length);
+                _capital += portfolio[i_vote].n_votes * p.n_votes / (p.members.length);
             }
         }
     }
@@ -169,12 +169,19 @@ contract Portfolios {
             _grade = 6;
         else if(_capital <= 1.0 ether)
             _grade = 7;
-        else if(_capital < 1.25 ether)
+        else if(_capital <= 1.25 ether)
             _grade = 8;
-        else if(_capital < 1.75 ether)
+        else if(_capital <= 1.75 ether)
             _grade = 9;
         else
             _grade = 10;
+    }
+
+    function votesLeft()
+      public view
+      returns (uint)
+    {
+      return voters[msg.sender].n_votes;
     }
 
     // ------------------------------------------------------------------------
