@@ -12,7 +12,7 @@ class Project extends Component {
         <div className="pure-g">
           <div className="pure-u-1-1">
             <h1>Websam</h1>
-            <p>You have ... left to give answers to the following questions.</p>
+            <p>In progress...</p>
           </div>
         </div>
       </main>
