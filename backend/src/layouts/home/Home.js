@@ -14,9 +14,15 @@ class Home extends Component {
             app and profile <a href="https://www.uport.me/">here</a>. Please use
             your full name.</p>
             <p>In the upper-right corner, you will see a login button. Click it
-            to login with UPort.</p>
+            to login with UPort. You will need to verify the login using UPort mobile app.
+            Each Ethereum transaction (voting, joining a project, etc.) will
+            require authorization with UPort.</p>
             <h2>IPFS</h2>
-            <p>RoMo uses Inter-Planetary File System for storing whitepapers.</p>
+            <p>RoMo uses Inter-Planetary File System
+            for storing whitepapers. Before registering your project in the system,
+            please install an <a href="https://ipfs.io/docs/getting-started/">IPFS client</a>,
+            upload your whitepaper (preferably in the PDF format) and keep it running before
+            the file propagates in the network.</p>
             <h2>Rinkeby</h2>
             <p>The underlying smart contracts are stored on the Ethereum testnet
             called Rinkeby (network ID = 4), which uses clique consensus.</p>
