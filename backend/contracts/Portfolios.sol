@@ -139,26 +139,28 @@ contract Portfolios {
     // How much capital does a voter have?
     function capital(address who)
       public view
-      returns (uint _capital)
+      returns (uint)
     {
-
         // 1. Capital not invested
-        _capital = voters[who].n_votes / 2;
+        uint _capital = voters[who].n_votes / 2;
 
         int hp = homeProject(who);
         if (hp != -1) {
 
             // 2. Capital earned in own project
             Project storage myProject = projects[uint(hp)];
-            _capital += myProject.n_votes / (2 * myProject.members.length);
-
-            // 3. Capital invested in other projects
-            votecast[] storage portfolio = investments[who];
-            for (uint i_vote = 0; i_vote < portfolio.length; i_vote++) {
-                Project storage p = projects[portfolio[i_vote].i_project];
-                _capital += portfolio[i_vote].n_votes * p.n_votes / (p.members.length);
-            }
+            _capital += myProject.n_votes / (4 * myProject.members.length);
         }
+
+
+        // 3. Capital invested in other projects
+        votecast[] storage portfolio = investments[who];
+        for (uint i_vote = 0; i_vote < portfolio.length; i_vote++) {
+            Project storage p = projects[portfolio[i_vote].i_project];
+            _capital += portfolio[i_vote].n_votes * p.n_votes / (2 ether * p.members.length) + portfolio[i_vote].n_votes;
+        }
+
+        return _capital;
     }
 
     // What is the current grade? Grade is multiplied by 2 to avoid fixed point

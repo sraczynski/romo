@@ -10,7 +10,7 @@ import eq1 from '../../img/projects.gif'
 
 class Project extends Component {
 
-  deployAddress = "0xba20492afd23c0396f5b3abc3f461b27eb90ae04";
+  deployAddress = "0x6784d69a4166d3852d40ca343e2c234f74cbcdef";
   Portfolios = contract(projectArtifacts);
 
   homeProject = -1;
@@ -72,7 +72,7 @@ class Project extends Component {
     this.Portfolios.at(this.deployAddress).then(instance => {
         return instance.homeProject.call(this.state.address);
       }).then(value => {
-        this.setState({ homeProject: value.valueOf() });
+        this.setState({ homeProject: parseInt(value.valueOf(), 10) });
       }).catch(e => { console.log(e); });
   }
 
@@ -80,6 +80,7 @@ class Project extends Component {
     this.Portfolios.at(this.deployAddress).then(instance => {
         return instance.capital.call(this.state.address,);
       }).then(value => {
+        console.log(value);
         this.setState({ capital: (value / 1e15).valueOf() })
       }).catch(e => { console.log(e); });
   }
@@ -143,12 +144,10 @@ class Project extends Component {
         return portfolio.n_projects.call({ from: this.state.teacher });
       }).then(value => {
         n_projects = value.valueOf();
-        console.log(n_projects);
         let i_project;
         this.setState({ projects: [] })
         for (i_project = 0; i_project < n_projects; i_project++) {
           portfolio.projects.call(i_project).then(project => {
-            console.log(project[1]);
             let newproject = {
               'whitepaper': this.toIPFSHash(project[1]),
               'title': project[2],
@@ -181,7 +180,6 @@ class Project extends Component {
 
   joinProject = (event) => {
     event.preventDefault();
-    console.log(this);
     let i_project = event.target.i_project.value;
     this.Portfolios.at(this.deployAddress).then(instance => {
         return instance.joinProject(this.state.address, i_project,
@@ -193,9 +191,8 @@ class Project extends Component {
 
   invest = (event) => {
     event.preventDefault();
-    console.log(this);
     let i_project = event.target.i_project.value;
-    let amount = parseInt(event.target.amount.value);
+    let amount = parseInt(event.target.amount.value, 10);
     this.Portfolios.at(this.deployAddress).then(instance => {
         return instance.vote(this.state.address, i_project, amount * 1e15,
                              { from: this.state.address });
@@ -216,7 +213,7 @@ class Project extends Component {
         </p>
         <p>Investment so far: {project.investment}</p>
         <form onSubmit={this.joinProject}>
-          {(this.state.homeProject != -1) ? (
+          {(this.state.homeProject !== -1) ? (
             <span></span>
           ) : (
             <span>
@@ -255,10 +252,10 @@ class Project extends Component {
             with 5.0.</p>
             <h2>Your portfolio</h2>
             <p>You have <span className="valuespan">{this.state.balance}</span> uninvested benders.</p>
-            <p>Your total capital is <span className="valuespan">{this.state.capital}</span> benders.</p>
+            <p>Your final capital is <span className="valuespan">{this.state.capital}</span> benders.</p>
             <p>Your current grade is <span className="valuespan">{this.state.grade}</span>.</p>
             <h2>Your project</h2>
-            {(this.state.homeProject != -1) ? (
+            {(this.state.homeProject !== -1) ? (
               <p>Your project is {this.state.homeProject + 1}.</p>
             ) : (
               <span id="noproject">
