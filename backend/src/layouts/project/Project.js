@@ -4,40 +4,13 @@ import { uport } from '../../util/connectors.js'
 const contract = require("truffle-contract");
 const projectArtifacts = require("../../../build/contracts/Portfolios.json");
 const bs58 = require('bs58')
+var mnid = require('mnid')
 
 import eq1 from '../../img/projects.gif'
 
-class ProjectEntry extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      i_project: props.i_project,
-      title: props.title,
-      investment: props.investment,
-      whitepaper: props.whitepaper,
-      myinvestment: "",
-    };
-  }
-  render() {
-    return(
-      <div className="projectentry">
-        <p><strong>{this.state.i_project}. {this.state.title}</strong></p>
-        <p>
-          Whitepaper link (via ipfs.jes.xxx): <a href={"https://ipfs.jes.xxx/ipfs/" + this.state.whitepaper}>ipfs/{this.state.whitepaper}</a>
-        </p>
-        <p>Investment so far: {this.state.investment}</p>
-        <form data-n_project="{this.state.n_project}">
-          <input type="text" value={this.state.myinvestment} placeholder="e.g., 100 benders" id="investment"/>
-          <input type="submit" value="Invest" />
-        </form>
-      </div>
-    )
-  }
-}
-
 class Project extends Component {
 
-  deployAddress = "0x4d602fd6be1131b8180858f6ee8b32f5d88fcba7";
+  deployAddress = "0xba20492afd23c0396f5b3abc3f461b27eb90ae04";
   Portfolios = contract(projectArtifacts);
 
   homeProject = -1;
@@ -46,12 +19,6 @@ class Project extends Component {
     super(props)
     authData = this.props
 
-    this.Portfolios.setProvider(uport.getProvider());
-    this.updateVotesLeft();
-    this.updateHomeProject();
-    this.updateCapital();
-    this.updateProjects();
-
     this.state = {
       homeProject: -1,
       balance: null,
@@ -59,15 +26,43 @@ class Project extends Component {
       capital: null,
       projects: [],
       newtitle: '',
-      newwhitepaper: ''
+      newwhitepaper: '',
+      teacher: '',
+      address: mnid.decode(this.props.authData.address).address
     };
+
+    this.Portfolios.setProvider(uport.getProvider());
+
+    let portfolios;
+
+    this.Portfolios.at(this.deployAddress).then(instance => {
+        portfolios = instance;
+        return portfolios.teacher.call();
+      }).then(value => {
+        this.setState({ teacher: value })
+        return portfolios.userActive.call(this.state.address);
+      }).then(value => {
+        if (!value) {
+          return portfolios.claimBenders(this.state.address, { from: this.state.address });
+        }
+      }).then(result => {
+        this.updateAll();
+      }).catch(e => { console.log(e); });
+  }
+
+  updateAll = () => {
+    this.updateVotesLeft();
+    this.updateHomeProject();
+    this.updateCapital();
+    this.updateGrade();
+    this.updateProjects();
   }
 
   // This is so WET....
 
   updateVotesLeft = () => {
     this.Portfolios.at(this.deployAddress).then(instance => {
-        return instance.votesLeft.call(this.account, { from: this.account });
+        return instance.votesLeft(this.state.address, { from: this.state.teacher });
       }).then(value => {
         this.setState({ balance: (value / 1e15).valueOf() })
       }).catch(e => { console.log(e); });
@@ -75,7 +70,7 @@ class Project extends Component {
 
   updateHomeProject = () => {
     this.Portfolios.at(this.deployAddress).then(instance => {
-        return instance.homeProject.call(this.account, { from: this.account });
+        return instance.homeProject.call(this.state.address);
       }).then(value => {
         this.setState({ homeProject: value.valueOf() });
       }).catch(e => { console.log(e); });
@@ -83,7 +78,7 @@ class Project extends Component {
 
   updateCapital = () => {
     this.Portfolios.at(this.deployAddress).then(instance => {
-        return instance.capital.call(this.account, { from: this.account });
+        return instance.capital.call(this.state.address,);
       }).then(value => {
         this.setState({ capital: (value / 1e15).valueOf() })
       }).catch(e => { console.log(e); });
@@ -91,33 +86,69 @@ class Project extends Component {
 
   updateGrade = () => {
     this.Portfolios.at(this.deployAddress).then(instance => {
-        return instance.grade.call(this.account, { from: this.account });
+        return instance.grade.call(this.state.address);
       }).then(value => {
-        this.setState({ grade: value.valueOf() })
+        this.setState({ grade: (value / 2.0).valueOf() })
       }).catch(e => { console.log(e); });
   }
 
+  // https://www.reddit.com/r/ethdev/comments/6lbmhy/a_practical_guide_to_cheap_ipfs_hash_storage_in/
+  fromIPFSHash = hash => {
+      const bytes = bs58.decode(hash);
+      const multiHashId = 2;
+      // remove the multihash hash id
+      return bytes.slice(multiHashId, bytes.length);
+  }
+
+  decimalToHex = (d, padding) => {
+    var hex = Number(d).toString(16);
+    padding = typeof (padding) === "undefined" || padding === null ? padding = 2 : padding;
+    while (hex.length < padding) {
+        hex = "0" + hex;
+    }
+    return hex;
+  }
+
+  bin2hex = array => {
+    var result = "0x";
+    for (var i = 0; i < array.length; i++) {
+      result += this.decimalToHex(array[i]);
+    }
+    return result;
+  }
+
+  bin2str = array => {
+    var result = "";
+    for (var i = 0; i < array.length; i++) {
+      result += String.fromCharCode(array[i]);
+    }
+    return result;
+  }
+
+  // https://www.reddit.com/r/ethdev/comments/6lbmhy/a_practical_guide_to_cheap_ipfs_hash_storage_in/
   toIPFSHash = str => {
       // remove leading 0x
       const remove0x = str.slice(2, str.length);
       // add back the multihash id
       const bytes = Buffer.from(`1220${remove0x}`, "hex");
-      const hash = bs58.encode(bytes);
-      return hash;
-  };
+      const ipfs = bs58.encode(bytes);
+      return ipfs;
+  }
 
   updateProjects = () => {
     let n_projects;
     let portfolio;
     this.Portfolios.at(this.deployAddress).then(instance => {
         portfolio = instance;
-        return portfolio.n_projects.call(this.account, { from: this.account });
+        return portfolio.n_projects.call({ from: this.state.teacher });
       }).then(value => {
         n_projects = value.valueOf();
+        console.log(n_projects);
         let i_project;
         this.setState({ projects: [] })
         for (i_project = 0; i_project < n_projects; i_project++) {
           portfolio.projects.call(i_project).then(project => {
+            console.log(project[1]);
             let newproject = {
               'whitepaper': this.toIPFSHash(project[1]),
               'title': project[2],
@@ -129,15 +160,48 @@ class Project extends Component {
       })
   }
 
-  handleChange(event) {
-    this.setState({
-      value: event.target.value
-    });
+  changeTitle(event) {
+    this.setState({ newtitle: event.target.value });
+  }
+
+  changeWhitepaper(event) {
+    this.setState({ newwhitepaper: event.target.value });
   }
 
   newproject(event) {
-    alert('A name was submitted: ' + this.state.value);
     event.preventDefault();
+    let whitepaperdecoded = this.fromIPFSHash(this.state.newwhitepaper);
+    this.Portfolios.at(this.deployAddress).then(instance => {
+        return instance.newProject(this.state.address, this.bin2str(whitepaperdecoded), this.state.newtitle,
+                                   { from: this.state.address });
+      }).then(result => {
+        this.updateAll();
+      }).catch(e => { console.log(e); });
+  }
+
+  joinProject = (event) => {
+    event.preventDefault();
+    console.log(this);
+    let i_project = event.target.i_project.value;
+    this.Portfolios.at(this.deployAddress).then(instance => {
+        return instance.joinProject(this.state.address, i_project,
+                                   { from: this.state.address });
+      }).then(result => {
+        this.updateAll();
+      }).catch(e => { console.log(e); });
+  }
+
+  invest = (event) => {
+    event.preventDefault();
+    console.log(this);
+    let i_project = event.target.i_project.value;
+    let amount = parseInt(event.target.amount.value);
+    this.Portfolios.at(this.deployAddress).then(instance => {
+        return instance.vote(this.state.address, i_project, amount * 1e15,
+                             { from: this.state.address });
+      }).then(result => {
+        this.updateAll();
+      }).catch(e => { console.log(e); });
   }
 
   render() {
@@ -145,7 +209,30 @@ class Project extends Component {
     var projectlist = [];
     for (var i_project = 0; i_project < this.state.projects.length; i_project++) {
       let project = this.state.projects[i_project];
-      projectlist.push(<ProjectEntry i_project={i_project} title={project.title} investment={project.votes} whitepaper={project.whitepaper}/>);
+      projectlist.push(<div className="projectentry" key={i_project}>
+        <p><strong>{i_project + 1}. {project.title}</strong></p>
+        <p>
+          Whitepaper link (via ipfs.jes.xxx): <a href={"https://ipfs.jes.xxx/ipfs/" + project.whitepaper}>ipfs/{project.whitepaper}</a>
+        </p>
+        <p>Investment so far: {project.investment}</p>
+        <form onSubmit={this.joinProject}>
+          {(this.state.homeProject != -1) ? (
+            <span></span>
+          ) : (
+            <span>
+              <input type="hidden" value={i_project} name="i_project"/>
+              <input type="submit" value="Join this project" />
+              <br />
+            </span>
+          )}
+        </form>
+        <form onSubmit={this.invest}>
+          <input type="hidden" value={i_project} name="i_project"/>
+          <input type="text" value={project.myinvestment} placeholder="e.g., 100 benders"
+            name="amount" onChange={this.changeInvestment}/>
+          <input type="submit" value="Invest" />
+        </form>
+      </div>)
     }
 
     return(
@@ -172,18 +259,18 @@ class Project extends Component {
             <p>Your current grade is <span className="valuespan">{this.state.grade}</span>.</p>
             <h2>Your project</h2>
             {(this.state.homeProject != -1) ? (
-              <p>Your project is {this.state.homeProject}.</p>
+              <p>Your project is {this.state.homeProject + 1}.</p>
             ) : (
               <span id="noproject">
                 <p>You are not part of a project. You need to create a new project or join an existing one.</p>
-                <form onSubmit={this.newproject}>
+                <form onSubmit={this.newproject.bind(this)}>
                   <label>
                     Title:<br></br>
-                    <input type="text" value={this.state.title} onChange={this.handleChange} />
+                    <input type="text" value={this.state.title} onChange={this.changeTitle.bind(this)} />
                   </label><br></br>
                   <label>
                     IPFS hash of the whitepaper:<br></br>
-                    <input type="text" value={this.state.whitepaper} onChange={this.handleChange} />
+                    <input type="text" value={this.state.whitepaper} onChange={this.changeWhitepaper.bind(this)} />
                   </label><br></br>
                   <input type="submit" value="Create" />
                 </form>

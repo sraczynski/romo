@@ -80,22 +80,10 @@ contract Portfolios {
     // Private methods
     // ------------------------------------------------------------------------
 
-    // Checks if the user is new and if so, initializes his/her voting capital
-    // to 1 ether.
-    function initVotes()
+    function updateInvestments(address who, uint i_project, uint n_votes)
       private
     {
-        if (!voters[msg.sender].active) {
-            voters[msg.sender].active = true;
-            voters[msg.sender].n_votes = 1 ether;
-            activeVoters++;
-        }
-    }
-
-    function updateInvestments(uint i_project, uint n_votes)
-      private
-    {
-        votecast[] storage portfolio = investments[msg.sender];
+        votecast[] storage portfolio = investments[who];
 
         bool alreadyVoted = false;
         for (uint i_vote = 0; i_vote < portfolio.length; i_vote++) {
@@ -116,33 +104,48 @@ contract Portfolios {
     // Public methods for voting and grading
     // ------------------------------------------------------------------------
 
-    // Vote casting
-    function vote(uint i_project, uint n_votes)
+    function userActive(address who)
+      public view
+      returns (bool)
+    {
+      return voters[who].active;
+    }
+
+    function claimBenders(address who)
       public
     {
-        initVotes();
-        if (voters[msg.sender].n_votes < n_votes)
+      if (!voters[who].active) {
+          voters[who].active = true;
+          voters[who].n_votes = 1 ether;
+          activeVoters++;
+      }
+    }
+
+    // Vote casting
+    function vote(address who, uint i_project, uint n_votes)
+      public
+    {
+        if (voters[who].n_votes < n_votes)
             return; // insufficient funds
 
-        voters[msg.sender].n_votes  -= n_votes;
+        voters[who].n_votes  -= n_votes;
         projects[i_project].n_votes += n_votes;
 
-        updateInvestments(i_project, n_votes);
+        updateInvestments(who, i_project, n_votes);
 
-        Voted(msg.sender, i_project, n_votes);
+        Voted(who, i_project, n_votes);
     }
 
     // How much capital does a voter have?
-    function capital()
-      public
+    function capital(address who)
+      public view
       returns (uint _capital)
     {
-        initVotes();
 
         // 1. Capital not invested
-        _capital = voters[msg.sender].n_votes / 2;
+        _capital = voters[who].n_votes / 2;
 
-        int hp = homeProject();
+        int hp = homeProject(who);
         if (hp != -1) {
 
             // 2. Capital earned in own project
@@ -150,7 +153,7 @@ contract Portfolios {
             _capital += myProject.n_votes / (2 * myProject.members.length);
 
             // 3. Capital invested in other projects
-            votecast[] storage portfolio = investments[msg.sender];
+            votecast[] storage portfolio = investments[who];
             for (uint i_vote = 0; i_vote < portfolio.length; i_vote++) {
                 Project storage p = projects[portfolio[i_vote].i_project];
                 _capital += portfolio[i_vote].n_votes * p.n_votes / (p.members.length);
@@ -160,11 +163,12 @@ contract Portfolios {
 
     // What is the current grade? Grade is multiplied by 2 to avoid fixed point
     // arithmetics.
-    function grade()
-      public
-      returns (uint8 _grade)
+    function grade(address who)
+      public view
+      returns (uint8)
     {
-        uint _capital = capital();
+        uint _capital = capital(who);
+        uint8 _grade;
         if (_capital <= 0.5 ether)
             _grade = 6;
         else if(_capital <= 1.0 ether)
@@ -175,13 +179,14 @@ contract Portfolios {
             _grade = 9;
         else
             _grade = 10;
+        return _grade;
     }
 
-    function votesLeft()
+    function votesLeft(address who)
       public view
       returns (uint)
     {
-      return voters[msg.sender].n_votes;
+      return voters[who].n_votes;
     }
 
     // ------------------------------------------------------------------------
@@ -189,28 +194,28 @@ contract Portfolios {
     // ------------------------------------------------------------------------
 
     // Creates a new project
-    function newProject(bytes32 whitepaper, string title)
+    function newProject(address who, bytes32 whitepaper, string title)
       public
     {
         Project storage p = projects[n_projects];
         p.whitepaper = whitepaper;
         p.title = title;
-        p.creator = msg.sender;
+        p.creator = who;
         n_projects++;
-        joinProject(n_projects - 1);
+        joinProject(who, n_projects - 1);
     }
 
     // Joins a project
-    function joinProject(uint i_project)
+    function joinProject(address who, uint i_project)
       public
     {
         if (i_project >= n_projects)
             return;
-        if (memberships[msg.sender].assigned) {  // already a member
-            uint existingProject = memberships[msg.sender].i_project;
+        if (memberships[who].assigned) {  // already a member
+            uint existingProject = memberships[who].i_project;
             uint8 i_member = 0;
             for (; i_member < projects[existingProject].members.length; i_member++) {
-                if (projects[existingProject].members[i_member] == msg.sender)
+                if (projects[existingProject].members[i_member] == who)
                     break;
             }
             for (; i_member < projects[existingProject].members.length - 1; i_member++) {
@@ -218,22 +223,22 @@ contract Portfolios {
             }
             projects[existingProject].members.length--;
         }
-        memberships[msg.sender].i_project = i_project;
-        memberships[msg.sender].assigned = true;
+        memberships[who].i_project = i_project;
+        memberships[who].assigned = true;
 
         projects[i_project].members.length++;
-        projects[i_project].members[projects[i_project].members.length - 1] = msg.sender;
+        projects[i_project].members[projects[i_project].members.length - 1] = who;
     }
 
     // What is my home project?
-    function homeProject()
+    function homeProject(address who)
       public view
       returns (int)
     {
-        if (!memberships[msg.sender].assigned) {  // already a member
+        if (!memberships[who].assigned) {  // already a member
             return -1;
         } else {
-            return int(memberships[msg.sender].i_project);
+            return int(memberships[who].i_project);
         }
     }
 }
