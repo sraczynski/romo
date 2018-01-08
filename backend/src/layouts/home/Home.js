@@ -8,7 +8,8 @@ class Home extends Component {
           <div className="pure-u-1-1">
             <h1>Welcome to RoMo!</h1>
             <p>This is the starting point for everything RoMo. You will need log
-            in to start.</p>
+            in to start. If you like, you can read the source code of this dapp
+            at <a href="https://github.com/sraczynski/romo">GitHub</a>.</p>
             <h2>UPort</h2>
             <p>RoMo uses UPort for user authentication. You need to get a UPort
             app and profile <a href="https://www.uport.me/">here</a>. Please use
@@ -29,13 +30,13 @@ class Home extends Component {
             <h2>Other technologies used:</h2>
             <ul>
               <li>Node.js &ndash; asynchronous JavaScript web application framework,</li>
-              <li>React.js &ndash; ...,</li>
-              <li>Redux &ndash; ...,</li>
-              <li>Webpack &ndash; ...,</li>
+              <li>React.js &ndash; a UI library,</li>
+              <li>Redux &ndash; state container for JS,</li>
+              <li><a href="https://webpack.js.org/">Webpack</a> &ndash; JS application bundler,</li>
               <li>Solidity &ndash; Java-like smart contract language,</li>
               <li><a href="https://remix.ethereum.org/">Remix</a> &ndash; a Solidity IDE,</li>
-              <li>Truffle &ndash; ...,</li>
-              <li>Web3 &ndash; ...,</li>
+              <li>Truffle &ndash; DApp development toolbox,</li>
+              <li>Web3 &ndash; JavaScript library for accessing the Ethereum network,</li>
               <li>Google Cloud Platform &ndash; a System-as-a-Service cloud platform,</li>
             </ul>
           </div>
