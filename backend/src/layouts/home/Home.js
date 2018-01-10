@@ -24,7 +24,8 @@ class Home extends Component {
             for storing whitepapers. Before registering your project in the system,
             please install an <a href="https://ipfs.io/docs/getting-started/">IPFS client</a>,
             upload your whitepaper (preferably in the PDF format) and keep it running before
-            the file propagates in the network.</p>
+            the file propagates in the network. You can also use the gateway running on this
+            server at <a href="http://romo.space:5001/webui">http://romo.space:5001/webui</a></p>
             <h2>Rinkeby</h2>
             <p>The underlying smart contracts are stored on the Ethereum testnet
             called Rinkeby (network ID = 4), which uses clique consensus. Thanks to that,
