@@ -80,8 +80,7 @@ class Project extends Component {
     this.Portfolios.at(this.deployAddress).then(instance => {
         return instance.capital.call(this.state.address,);
       }).then(value => {
-        console.log(value);
-        this.setState({ capital: (value / 1e15).valueOf() })
+        this.setState({ capital: (value).valueOf() / 1e15 })
       }).catch(e => { console.log(e); });
   }
 
@@ -137,6 +136,15 @@ class Project extends Component {
   }
 
   updateProjects = () => {
+
+    function compare(a, b) {
+      if (a.i_project < b.i_project)
+        return -1;
+      if (a.i_project > b.i_project)
+        return 1;
+      return 0;
+    }
+
     let n_projects;
     let portfolio;
     this.Portfolios.at(this.deployAddress).then(instance => {
@@ -147,14 +155,18 @@ class Project extends Component {
         let i_project;
         this.setState({ projects: [] })
         for (i_project = 0; i_project < n_projects; i_project++) {
-          portfolio.projects.call(i_project).then(project => {
+          portfolio.projects.call(i_project).then(((i_project, project) => {
             let newproject = {
               'whitepaper': this.toIPFSHash(project[1]),
+              'i_project': i_project,
               'title': project[2],
               'votes': project[3].valueOf()
             };
-            this.setState({ projects: [...this.state.projects, newproject] });
-          })
+            let projects = this.state.projects;
+            projects[i_project] = newproject;
+            this.setState({ projects: projects });
+            // this.setState({ projects: [...this.state.projects, newproject] });
+          }).bind(null, i_project));
         }
       })
   }
@@ -211,17 +223,13 @@ class Project extends Component {
         <p>
           Whitepaper link (via ipfs.jes.xxx): <a href={"https://ipfs.jes.xxx/ipfs/" + project.whitepaper}>ipfs/{project.whitepaper}</a>
         </p>
-        <p>Investment so far: {project.investment}</p>
+        <p>Investment so far: {project.votes / 1e15}</p>
         <form onSubmit={this.joinProject}>
-          {(this.state.homeProject !== -1) ? (
-            <span></span>
-          ) : (
-            <span>
-              <input type="hidden" value={i_project} name="i_project"/>
-              <input type="submit" value="Join this project" />
-              <br />
-            </span>
-          )}
+          <span>
+            <input type="hidden" value={i_project} name="i_project"/>
+            <input type="submit" value="Join this project" />
+            <br />
+          </span>
         </form>
         <form onSubmit={this.invest}>
           <input type="hidden" value={i_project} name="i_project"/>
@@ -256,7 +264,7 @@ class Project extends Component {
             <p>Your current grade is <span className="valuespan">{this.state.grade}</span>.</p>
             <h2>Your project</h2>
             {(this.state.homeProject !== -1) ? (
-              <p>Your project is {this.state.homeProject + 1}.</p>
+              <p>Your project is {this.state.homeProject + 1} ({this.state.projects[this.state.homeProject].title}).</p>
             ) : (
               <span id="noproject">
                 <p>You are not part of a project. You need to create a new project or join an existing one.</p>
