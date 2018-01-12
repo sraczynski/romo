@@ -141,13 +141,13 @@ class Project extends Component {
 
   updateProjects = () => {
 
-    function compare(a, b) {
-      if (a.i_project < b.i_project)
-        return -1;
-      if (a.i_project > b.i_project)
-        return 1;
-      return 0;
-    }
+    // function compare(a, b) {
+    //   if (a.i_project < b.i_project)
+    //     return -1;
+    //   if (a.i_project > b.i_project)
+    //     return 1;
+    //   return 0;
+    // }
 
     let n_projects;
     let portfolio;
@@ -156,6 +156,7 @@ class Project extends Component {
         return portfolio.n_projects.call({ from: this.state.teacher });
       }).then(value => {
         n_projects = value.valueOf();
+        console.log(n_projects);
         let i_project;
         this.setState({ projects: [] })
         for (i_project = 0; i_project < n_projects; i_project++) {
@@ -224,24 +225,30 @@ class Project extends Component {
     for (var i_project = 0; i_project < this.state.projects.length; i_project++) {
       let project = this.state.projects[i_project];
       projectlist.push(<div className="projectentry" key={i_project}>
-        <p><strong>{i_project + 1}. {project.title}</strong></p>
-        <p>
-          Whitepaper link (via ipfs.jes.xxx): <a href={"https://ipfs.jes.xxx/ipfs/" + project.whitepaper}>ipfs/{project.whitepaper}</a>
-        </p>
-        <p>Investment so far: {project.votes / 1e15}</p>
-        <form onSubmit={this.joinProject}>
+        {(project != null) ? (
           <span>
-            <input type="hidden" value={i_project} name="i_project"/>
-            <input type="submit" value="Join this project" />
-            <br />
+            <p><strong>{i_project + 1}. {project.title}</strong></p>
+            <p>
+              Whitepaper link (via ipfs.jes.xxx): <a href={"https://ipfs.jes.xxx/ipfs/" + project.whitepaper}>ipfs/{project.whitepaper}</a>
+            </p>
+            <p>Investment so far: {project.votes / 1e15}</p>
+            <form onSubmit={this.joinProject}>
+              <span>
+                <input type="hidden" value={i_project} name="i_project"/>
+                <input type="submit" value="Join this project" />
+                <br />
+              </span>
+            </form>
+            <form onSubmit={this.invest}>
+              <input type="hidden" value={i_project} name="i_project"/>
+              <input type="text" value={project.myinvestment} placeholder="e.g., 100 benders"
+                name="amount" onChange={this.changeInvestment}/>
+              <input type="submit" value="Invest" />
+            </form>
           </span>
-        </form>
-        <form onSubmit={this.invest}>
-          <input type="hidden" value={i_project} name="i_project"/>
-          <input type="text" value={project.myinvestment} placeholder="e.g., 100 benders"
-            name="amount" onChange={this.changeInvestment}/>
-          <input type="submit" value="Invest" />
-        </form>
+        ) : (
+          <p>Project list is still loading...</p>
+        )}
       </div>)
     }
 
@@ -269,7 +276,11 @@ class Project extends Component {
             <p>Your current grade is <span className="valuespan">{this.state.grade}</span>.</p>
             <h2>Your project</h2>
             {(this.state.homeProject !== -1) ? (
-              <p>Your project is {this.state.homeProject + 1} ({this.state.projects[this.state.homeProject].title}).</p>
+              (this.state.projects[this.state.homeProject] != null) ? (
+                <p>Your project is {this.state.homeProject + 1} ({this.state.projects[this.state.homeProject].title}).</p>
+              ) : (
+                <p>Project list is still loading...</p>
+              )
             ) : (
               <span id="noproject">
                 <p>You are not part of a project. You need to create a new project or join an existing one.</p>
