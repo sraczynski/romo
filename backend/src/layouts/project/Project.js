@@ -64,6 +64,7 @@ class Project extends Component {
     this.Portfolios.at(this.deployAddress).then(instance => {
         return instance.votesLeft(this.state.address, { from: this.state.teacher });
       }).then(value => {
+        console.log(value);
         this.setState({ balance: (value / 1e15).valueOf() })
       }).catch(e => { console.log(e); });
   }
@@ -72,6 +73,7 @@ class Project extends Component {
     this.Portfolios.at(this.deployAddress).then(instance => {
         return instance.homeProject.call(this.state.address);
       }).then(value => {
+        console.log(value);
         this.setState({ homeProject: parseInt(value.valueOf(), 10) });
       }).catch(e => { console.log(e); });
   }
@@ -80,6 +82,7 @@ class Project extends Component {
     this.Portfolios.at(this.deployAddress).then(instance => {
         return instance.capital.call(this.state.address,);
       }).then(value => {
+        console.log(value);
         this.setState({ capital: (value).valueOf() / 1e15 })
       }).catch(e => { console.log(e); });
   }
@@ -88,6 +91,7 @@ class Project extends Component {
     this.Portfolios.at(this.deployAddress).then(instance => {
         return instance.grade.call(this.state.address);
       }).then(value => {
+        console.log(value);
         this.setState({ grade: (value / 2.0).valueOf() })
       }).catch(e => { console.log(e); });
   }
@@ -156,6 +160,7 @@ class Project extends Component {
         this.setState({ projects: [] })
         for (i_project = 0; i_project < n_projects; i_project++) {
           portfolio.projects.call(i_project).then(((i_project, project) => {
+            console.log(i_project);
             let newproject = {
               'whitepaper': this.toIPFSHash(project[1]),
               'i_project': i_project,
